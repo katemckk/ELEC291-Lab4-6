@@ -1,2 +1,2 @@
 # ELEC291-Lab4
-Capacitance Meter
+555 Timer / Capacitance Meter
