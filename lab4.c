@@ -5,6 +5,10 @@
 #define SYSCLK      24500000L  // SYSCLK frequency in Hz
 #define BAUDRATE      115200L  // Baud rate of UART in bps
 
+void print_capacitance ();
+
+void display_cap();
+
 char _c51_external_startup (void)
 {
 	// Disable Watchdog with key sequence
