@@ -11,6 +11,15 @@
 #define SYSCLK      72000000L  // SYSCLK frequency in Hz
 #define BAUDRATE      115200L  // Baud rate of UART in bps
 
+#define LCD_RS P1_7
+// #define LCD_RW Px_x // Not used in this code.  Connect to GND
+#define LCD_E  P2_0
+#define LCD_D4 P1_3
+#define LCD_D5 P1_2
+#define LCD_D6 P1_1
+#define LCD_D7 P1_0
+#define CHARS_PER_LINE 16
+
 unsigned char overflow_count;
 
 char _c51_external_startup (void)
@@ -216,7 +225,8 @@ int getsn (char * buff, int len)
 
 void main (void) 
 {
-	unsigned long frequency;
+	char cap_str[17];
+	float frequency;
 	float capacitance;
 	
 	TIMER0_Init();
@@ -229,13 +239,14 @@ void main (void)
 	        "Compiled: %s, %s\n\n",
 	        __FILE__, __DATE__, __TIME__);
 
-	char buff[17];
+	//char buff[17];
 	// Configure the LCD
 	LCD_4BIT();
 	
    	// Display something in the LCD
 	LCDprint("Capacitance:", 1, 1);
-	LCDprint(" ", 2, 1);
+	//LCDprint(" ", 2, 1);
+	
 
 	while(1)
 	{
@@ -248,16 +259,20 @@ void main (void)
 		TR0=0; // Stop Timer/Counter 0
 		frequency =overflow_count*0x10000L+TH0*0x100L+TL0;
 
+		// RA = 1950, RB = 1960 -> 2RA + RB = 5860
+		capacitance = 1.44/(5860.0*frequency*0.000001);
+		printf("\rf=%f Hz c=%f uf", frequency, capacitance);
 		
-
-		printf("\rf=%luHz", frequency);
-		capacitance = 1.44*3*1000*0.000001/(float)frequemcy;
-		printf("\rc=%f uf", capacitance);
 		
 		//printf("Type F to display frequency and P to display period: ");
 		//getsn(buff, sizeof(buff));
-		//printf("\n");
-		LCDprint("%f uF", capacitance, 2, 1);
+		//printf("\n"); 
+		
+		sprintf(cap_str, "%.3f uF", capacitance); // Format as string
+    
+    
+		LCDprint(cap_str, 2, 1); // Display capacitance on LCD
+		
 		
 	}
 
