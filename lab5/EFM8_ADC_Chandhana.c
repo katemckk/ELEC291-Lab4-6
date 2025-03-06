@@ -361,10 +361,10 @@ void main (void)
 	        __FILE__, __DATE__, __TIME__);
 	
 	//might need to change
-	InitPinADC(2, 2); // Configure P2.2 as analog input
-	InitPinADC(2, 3); // Configure P2.3 as analog input
-	InitPinADC(2, 4); // Configure P2.4 as analog input
-	//InitPinADC(2, 5); // Configure P2.5 as analog input
+	InitPinADC(2, 2); // Configure P2.2 as analog input : Zero-cross signal of v1
+	InitPinADC(2, 3); // Configure P2.3 as analog input : zero cross signal of v2
+	InitPinADC(2, 4); // Configure P2.4 as analog input : peak value signal of v1
+	InitPinADC(2, 5); // Configure P2.5 as analog input ; peak value signal of v2
     InitADC();
 
 	while(1)
