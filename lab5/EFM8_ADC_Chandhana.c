@@ -346,6 +346,17 @@ float calculateRMS (float voltage) {
 	return voltage/1.41421356;
 }
 
+void printLCD (float v1, float v2, float phase, float freq) {
+	char line1[17];
+	char line2[17];
+
+	sprintf(line1, "vr=%.2 v2=%.2f", v1, v2); 
+	sprintf(line2, "ph=%.0f f=%.0f", phase, freq); 
+
+	LCDprint(line1, 1, 1); 
+	LCDprint(line2, 2, 1); 
+}
+
 void main (void)
 {
 	//float v[4];
