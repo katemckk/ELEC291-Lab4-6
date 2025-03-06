@@ -342,6 +342,10 @@ float gethalfperiod(){
 	Period=(TH0*0x100+TL0)*2; //assumer period is unsigned int
 	return Period;
 
+float calculateRMS (float voltage) {
+	return voltage/1.41421356;
+}
+
 void main (void)
 {
 	//float v[4];
