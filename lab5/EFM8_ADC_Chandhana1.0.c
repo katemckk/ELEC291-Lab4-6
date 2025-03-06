@@ -381,6 +381,7 @@ void main (void)
 			while (P2_1 == 0); // Wait for the signal to be one
 			TR0=1; // Start timing
 			Timer3us(100);
+
 			while (P2_1 == 1) {
 				if(TF0 == 1) {
 					overflow_count++;
@@ -395,8 +396,10 @@ void main (void)
 			TH0=0; TL0=0; // Reset the timer
 			TF0 = 0; overflow_count = 0;
 			overflow_count = 0;
+
 			while (P2_1 == 1); // Wait for the signal to be zero
 			while (P2_1 == 0); // Wait for the signal to be one
+
 			TR0=1; // Start timing
 			Timer3us(10);
 			while (P2_1 == 1){
@@ -407,16 +410,20 @@ void main (void)
 				}
 			} // Wait for the signal to be zero
 			TR0=0; // Stop timer 0
+
 			//[TH0,TL0] is half the period in multiples of 12/CLK, so:
 			 // Assume Period is unsigned int
 			// make sure the distance between consecutive measurements have a reasonable distance
 			noise_filter=((overflow_count * 65536.0 + TH0 * 256.0 + TL0)* (12.0 / SYSCLK));
 
-			if(fabsf( (1.0/(2.0*noise_filter)) - (1.0/(2.0*period))) > max_distance){
-				max_distance = fabsf( (1.0/(2.0*noise_filter)) - (1.0/(2.0*period)));
-				//printf("%.5f\n", fabsf( (1.0/(2.0*noise_filter)) - (1.0/(2.0*period))));
-
+			if ((1.0/(2.0*noise_filter)) - (1.0/(2.0*period)) > max_distance){
+    			max_distance = (1.0/(2.0*noise_filter)) - (1.0/(2.0*period));
+    				//printf("%.5f\n", (1.0/(2.0*noise_filter)) - (1.0/(2.0*period)));
 			}
+			else if ((1.0/(2.0*noise_filter)) - (1.0/(2.0*period)) < -max_distance){
+    			max_distance = -((1.0/(2.0*noise_filter)) - (1.0/(2.0*period)));
+    		//printf("%.5f\n", (1.0/(2.0*noise_filter)) - (1.0/(2.0*period)));
+}
 		}
 		
 		//printf("max distance: %f\n", max_distance);
