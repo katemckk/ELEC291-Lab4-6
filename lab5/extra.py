@@ -38,33 +38,35 @@ fig, ax = plt.subplots()
 ax.set_xlabel("Time (ms)")
 ax.set_ylabel("Voltage (V)")
 ax.set_title("Real-time Sinusoidal Waveforms")
-ax.set_xlim(0, 20)  # 20ms range for visualization
-ax.set_ylim(-5, 5)  # Adjust according to expected voltage range
+
+
+ax.set_xlim(0, 3 * (1000 / freq))  # Show 3 full cycles
+ax.set_ylim(-5, 5)  
+
 line1, = ax.plot([], [], label="Signal 1", color='b')
 line2, = ax.plot([], [], label="Signal 2", color='r')
 ax.legend()
 
 # Time axis setup
-t = np.linspace(0, 20, 1000)  # Simulated 20ms time window
+t = np.linspace(0, 3 * (1000 / freq), 1000)
 
-# Update function for animation
 def update(frame):
     data = getValues()
     if data:
         Vrms1, Vrms2, phase_deg, freq = data
 
-        # Convert RMS to peak voltage (Vpeak = Vrms * sqrt(2))
+        # Convert RMS to peak
         Vp1 = Vrms1 * np.sqrt(2)
         Vp2 = Vrms2 * np.sqrt(2)
 
-        # Convert phase from degrees to radians
+        # Convert phase from degrees to rads
         phase_rad = np.radians(phase_deg)
 
-        # Generate sine waves
+        # sine waves
         y1 = Vp1 * np.sin(2 * np.pi * freq * t / 1000)
         y2 = Vp2 * np.sin(2 * np.pi * freq * t / 1000 + phase_rad)
 
-        # Update plot data
+        # Update data
         line1.set_data(t, y1)
         line2.set_data(t, y2)
 
