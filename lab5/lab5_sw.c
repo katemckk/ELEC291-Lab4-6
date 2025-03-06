@@ -1,4 +1,4 @@
-// lab5_hw.c: Hardware-dependent version
+// lab5_sw.c: extreme software version
 //
 // (c) 2008-2023, Jesus Calvino-Fraga
 //
