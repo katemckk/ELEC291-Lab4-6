@@ -246,6 +246,7 @@ void main(void)
 	long int count;
 	float T, f, cap;
 	char buffer1[16]; // Buffers for LCD printing
+	char buffer2[16];
 	LCD_4BIT(); // Initialize the LCD
 	CFGCON = 0;
   
@@ -272,7 +273,9 @@ void main(void)
 			
 			printf("f=%.2fHz, Count=%ld ,Cap=%.4fuF \r", f, count, cap);
 			sprintf(buffer1, "C: %.2f uF", cap);
+			sprintf(buffer2, "F: %.2f Hz", f);
 			LCDprint(buffer1, 1, 1);
+			LCDprint(buffer2, 2, 1);
 		}
 		else
 		{
