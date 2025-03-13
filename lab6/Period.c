@@ -279,6 +279,11 @@ void main(void)
 			{
 			cap = 0.00103;
 			}
+
+			if (cap > 0.011 && cap < 0.0115) // 10nF
+			{
+			cap = 0.01001;
+			}
 			
 			
 			printf("f=%.2fHz, Count=%ld, Cap=%.4fuF \r", f, count, cap);
