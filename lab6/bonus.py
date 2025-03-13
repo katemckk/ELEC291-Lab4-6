@@ -18,24 +18,24 @@ standard_values = {
 }
 
 correction_factors = {
-    "102": -0.03,   # Measured 1.03 nF → Adjust to 1.0 nF
-    "103": -0.1,    # Measured 10.1 nF → Adjust to 10.0 nF
+    "102": -30,   # Measured 1.03 nF → Adjust to 1.0 nF
+    "103": -100,    # Measured 10.1 nF → Adjust to 10.0 nF
     "104": 0,       # Measured correctly
-    "105": 50,      # Measured 0.95 µF → Adjust to 1.0 µF
+    "105": 50000,      # Measured 0.95 µF → Adjust to 1.0 µF
 }
 
 def get_capacitor_code(value):
     """Determine the capacitor code from a measured capacitance (uF)."""
-    value_nF = value * 1e3  # Convert uF to nF
+    value_pF = value * 1e6  # Convert uF to pF
 
     # Apply correction factor if applicable
     for code, correction in correction_factors.items():
         corrected_value = standard_values[code] / 1000 + correction
-        if abs(corrected_value - value_nF) <= 0.1 * corrected_value:  # 10% tolerance
+        if abs(corrected_value - value_pF) <= 0.1 * corrected_value:  # 10% tolerance
             return code
 
     # If no direct match, find the closest
-    closest_code = min(standard_values, key=lambda k: abs(standard_values[k] / 1000 - value_nF))
+    closest_code = min(standard_values, key=lambda k: abs(standard_values[k] / 1000 - value_pF))
     return closest_code
 
 #ser = serial.Serial(
@@ -48,7 +48,7 @@ def get_capacitor_code(value):
 
 def read_serial_data(serial_port):
     try:
-        line = ser.readline().decode('utf-8').strip()
+        line = serial_port.readline().decode('utf-8').strip()
         match = re.search(r"Cap=([0-9.]+)uf", line)
         if match:
             return float(match.group(1))
@@ -62,8 +62,12 @@ def main():
     pygame.display.set_caption("Capacitance Reader")
     font = pygame.font.Font(None, 36)
     
-    ser = serial.Serial('COM3', 115200, timeout=1)
-    time.sleep(2)  # Give some time for the serial connection
+    try:
+        ser = serial.Serial('COM3', 115200, timeout=1)
+        time.sleep(2)  # Give some time for the serial connection
+    except serial.SerialException as e:
+        print("Could not open serial port:", e)
+        return
     
     running = True
     while running:
@@ -73,7 +77,7 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
         
-        capacitance = read_serial_data(serial_port)
+        capacitance = read_serial_data(ser)
         if capacitance is not None:
             cap_code = get_capacitor_code(capacitance)
             text = font.render(f"Capacitance: {capacitance:.4f} uF", True, (255, 255, 255))
