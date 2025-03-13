@@ -249,6 +249,9 @@ void main(void)
 	char buffer2[16];
 	LCD_4BIT(); // Initialize the LCD
 	CFGCON = 0;
+
+	char unit[3];  
+    float displayCap;
   
     UART2Configure(115200);  // Configure UART2 for a baud rate of 115200
     
@@ -262,32 +265,46 @@ void main(void)
     
     while(1)
     {
-		count=GetPeriod(93);
+		count=GetPeriod(100);
 		if(count>0)
 		{
 			T=(count*2.0)/(SYSCLK*100.0);
 			f=1/T;
 			
-			cap =1.44/(f*5001);
+			
+			cap =1.44/(f*5001.0);
 			cap*=1000000.0;
-
-			if (cap > 1.3 && cap < 1.6) // If measured capacitance is close to 1nF
+			
+			if (cap > 0.0013 && cap < 0.0016) // If measured capacitance is close to 1nF
 			{
-			cap = 1.03;
+			cap = 0.00103;
 			}
 			
-			printf("f=%.2fHz, Count=%ld ,Cap=%.4fuF \r", f, count, cap);
-			sprintf(buffer1, "C: %.2f uF", cap);
-			sprintf(buffer2, "F: %.2f Hz", f);
-			LCDprint(buffer1, 1, 1);
-			LCDprint(buffer2, 2, 1);
-		}
-		else
-		{
-			printf("NO SIGNAL                     \r");
-			LCDprint("No Signal", 1, 1);
-			LCDprint("", 2, 1);
-		}
+			
+			printf("f=%.2fHz, Count=%ld, Cap=%.4fuF \r", f, count, cap);
+        
+        // Dynamically change unit
+        	  
+        if (cap < 0.0500) {
+            displayCap = cap * 1000.0;  
+            unit[0] = 'n'; unit[1] = 'F'; unit[2] = '\0';
+        } else {
+            displayCap = cap;  // Keep in µF
+            unit[0] = 'u'; unit[1] = 'F'; unit[2] = '\0';
+        }
+        
+        // Display adjusted unit on LCD
+        sprintf(buffer1, "C: %.2f %s", displayCap, unit);
+        sprintf(buffer2, "F: %.2f Hz", f);
+        LCDprint(buffer1, 1, 1);
+        LCDprint(buffer2, 2, 1);
+    }
+    else
+    {
+        printf("NO SIGNAL                     \r");
+        LCDprint("No Signal", 1, 1);
+        LCDprint("", 2, 1);
+    }
 		fflush(stdout); // GCC peculiarities: need to flush stdout to get string out without a '\n'
 		waitms(200);
     }
