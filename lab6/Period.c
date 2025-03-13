@@ -228,6 +228,8 @@ float filter_cap (float cap) {
 	return cap;
 }
 
+
+
 void ADCConf(void)
 {
     AD1CON1CLR = 0x8000;    // disable ADC before configuration
@@ -338,10 +340,25 @@ void main(void)
 			
 			cap =1.44/(f*5001.0);
 			cap*=1000000.0;
+			if (cap<0.15 && cap>0.08){
+				val = 104;
+					}
+			if (cap<1.05 && cap>0.90){
+				vsl = 105;
+					}
 			cap = filter_cap(cap);
+			if (cap==0.00103){
+				val= 102
+					}
+			if (cap==0.0101){
+				val = 103
+					{
+			
+
 			
 			
-			printf("f=%.2fHz, Count=%ld, Cap=%.4fuF , resistance=%.4fohms\r", f, count, cap,R);
+			
+			printf("f=%.2fHz, Count=%ld, Cap=%.4fuF , resistance=%.4fohms\r", f, count, cap,R, val);
         
         // Dynamically change unit
         	  
@@ -355,7 +372,7 @@ void main(void)
         
         if (cap_mode == 1) {
         	// Display adjusted unit on LCD
-        	sprintf(buffer1, "C: %.3f %s", displayCap, unit);
+        	sprintf(buffer1, "C: %.3f %s", displayCap, unit, val);
         	sprintf(buffer2, "F: %.3f Hz", f);
         	LCDprint(buffer1, 1, 1);
         	LCDprint(buffer2, 2, 1);
