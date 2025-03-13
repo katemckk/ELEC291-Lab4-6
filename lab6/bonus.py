@@ -3,29 +3,48 @@ import serial
 import re
 import time
 
+
+standard_values = {
+    "101": 100,
+    "102": 1000, # 1nF
+    "103": 10000, # 10 nF
+    "104": 100000, # 0.1 uF
+    "105": 1000000, # 1 uF
+    "221": 220,
+    "222": 2200,
+    "223": 22000,
+    "224": 220000,
+    "225": 2200000,
+}
+
+correction_factors = {
+    "102": -0.03,   # Measured 1.03 nF → Adjust to 1.0 nF
+    "103": -0.1,    # Measured 10.1 nF → Adjust to 10.0 nF
+    "104": 0,       # Measured correctly
+    "105": 50,      # Measured 0.95 µF → Adjust to 1.0 µF
+}
+
 def get_capacitor_code(value):
-    standard_values = {
-        "101": 100,
-        "102": 1000,
-        "103": 10000,
-        "104": 100000,
-        "105": 1000000,
-        "221": 220,
-        "222": 2200,
-        "223": 22000,
-        "224": 220000,
-        "225": 2200000,
-    }
-    closest_code = min(standard_values, key=lambda k: abs(standard_values[k] - (value * 1e6)))
+    """Determine the capacitor code from a measured capacitance (uF)."""
+    value_nF = value * 1e3  # Convert uF to nF
+
+    # Apply correction factor if applicable
+    for code, correction in correction_factors.items():
+        corrected_value = standard_values[code] / 1000 + correction
+        if abs(corrected_value - value_nF) <= 0.1 * corrected_value:  # 10% tolerance
+            return code
+
+    # If no direct match, find the closest
+    closest_code = min(standard_values, key=lambda k: abs(standard_values[k] / 1000 - value_nF))
     return closest_code
 
-ser = serial.Serial(
-    port='COM3',  # Change this to your actual COM port
-    baudrate=115200,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE, 
-    bytesize=serial.EIGHTBITS
-)
+#ser = serial.Serial(
+#    port='COM3',  # Change this to your actual COM port
+ #   baudrate=115200,
+ #   parity=serial.PARITY_NONE,
+  #  stopbits=serial.STOPBITS_ONE, 
+   # bytesize=serial.EIGHTBITS
+#)
 
 def read_serial_data(serial_port):
     try:
@@ -43,7 +62,7 @@ def main():
     pygame.display.set_caption("Capacitance Reader")
     font = pygame.font.Font(None, 36)
     
-    serial_port = serial.Serial('COM3', 9600, timeout=1)
+    ser = serial.Serial('COM3', 115200, timeout=1)
     time.sleep(2)  # Give some time for the serial connection
     
     running = True
@@ -65,7 +84,7 @@ def main():
         pygame.display.flip()
         time.sleep(0.5)  # Reduce CPU usage
     
-    serial_port.close()
+    ser.close()
     pygame.quit()
 
 if __name__ == "__main__":
