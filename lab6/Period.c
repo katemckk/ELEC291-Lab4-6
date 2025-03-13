@@ -220,15 +220,6 @@ void LCDprint(char * string, unsigned char line, unsigned char clear)
 			WriteData(' '); //Clear the rest of the line if clear is 1
 }
 
-float filter_cap (float cap) {
-	if (cap > 0.0013 && cap < 0.0016) { // If measured capacitance is close to 1nF
-		return 0.00103; }
-	if (cap > 0.011 && cap < 0.0115) { // 10nF
-		return 0.0101; }
-	return cap;
-}
-
-
 
 void ADCConf(void)
 {
@@ -281,12 +272,14 @@ void main(void)
 	float T, f, cap, R;
 	char buffer1[16]; // Buffers for LCD printing
 	char buffer2[16];
+	char buffer3[16];
 	LCD_4BIT(); // Initialize the LCD
 	CFGCON = 0;
 	
 	int adcval;
     float voltage;
     int cap_mode = 1;
+    int val = 102;
 
 	char unit[3];  
     float displayCap;
@@ -319,12 +312,6 @@ void main(void)
     {
 		count=GetPeriod(100);
 		
-		if (PORTB&(1<<15) == 0) { 
-    		wait_debounce(); // Debounce
-    		if (PORTB&(1<<15) == 0) { 
-        	cap_mode = !cap_mode;
-    		}
-		}
 		
 		if(count>0)
 		{
@@ -340,55 +327,48 @@ void main(void)
 			
 			cap =1.44/(f*5001.0);
 			cap*=1000000.0;
-			if (cap<0.15 && cap>0.08){
-				val = 104;
-					}
-			if (cap<1.05 && cap>0.90){
-				vsl = 105;
-					}
-			cap = filter_cap(cap);
-			if (cap==0.00103){
-				val= 102
-					}
-			if (cap==0.0101){
-				val = 103
-					{
-			
-
 			
 			
+			if (cap<0.15 && cap>0.08){ val = 104; }
+			if (cap<1.05 && cap>0.90){	val = 105;	}
 			
-			printf("f=%.2fHz, Count=%ld, Cap=%.4fuF , resistance=%.4fohms\r", f, count, cap,R, val);
+			if (cap==0.00103){	val= 102;}
+			if (cap==0.0101){	val = 103;	}
+			
+			
+			printf("f=%.2fHz, Count=%ld, Cap=%.4fuF , resistance=%.4fohms code=%d \r", f, count, cap,R, val);
         
         // Dynamically change unit
         	  
-        if (cap < 0.0500) {
-            displayCap = cap * 1000.0;  
-            unit[0] = 'n'; unit[1] = 'F'; unit[2] = '\0';
-        } else {
-            displayCap = cap;  // Keep in µF
-            unit[0] = 'u'; unit[1] = 'F'; unit[2] = '\0';
-        }
+        	if (cap < 0.0500) {
+            	displayCap = cap * 1000.0;  
+            	unit[0] = 'n'; unit[1] = 'F'; unit[2] = '\0';
+        	} else {
+            	displayCap = cap;  // Keep in µF
+            	unit[0] = 'u'; unit[1] = 'F'; unit[2] = '\0';
+        	}
         
-        if (cap_mode == 1) {
-        	// Display adjusted unit on LCD
-        	sprintf(buffer1, "C: %.3f %s", displayCap, unit, val);
-        	sprintf(buffer2, "F: %.3f Hz", f);
-        	LCDprint(buffer1, 1, 1);
-        	LCDprint(buffer2, 2, 1);
-        }
+        	if (cap_mode == 1) {
+        		// Display adjusted unit on LCD
+        		sprintf(buffer1, "C: %.3f %s %d", displayCap, unit, val);
+        		sprintf(buffer2, "F: %.3f Hz", f);
+        		LCDprint(buffer1, 1, 1);
+        		LCDprint(buffer2, 2, 1);
+        	}
         	// check if there's  no capacitor being measured
-        else {
-        	sprintf(buffer1, "R: %.2f %s", R);
-        	LCDprint(buffer1, 1, 1);
+        	else {
+        	sprintf(buffer3, "R: %.2f", R);
+        	LCDprint(buffer3, 1, 1);
         	LCDprint("   ohms", 2, 1);
-        }
+        	}
         
-        if (f > 120000.0 && f < 180000.0) {
+        	if (f > 120000.0 && f < 180000.0) {
         	// turn on red led
         	LATAbits.LATA0 = 1;
-        	
-        }
+        	cap_mode = 0;
+        		
+       		 }
+        	else { cap_mode = 1;}
         
         
         LATAbits.LATA0 = !LATAbits.LATA0;
