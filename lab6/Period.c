@@ -258,6 +258,14 @@ void main(void)
     ANSELB &= ~(1<<6); // Set RB6 as a digital I/O
     TRISB |= (1<<6);   // configure pin RB6 as input
     CNPUB |= (1<<6);   // Enable pull-up resistor for RB6
+    
+    ANSELB &= ~(1<<15); // Set RB15 as a digital I/O
+    TRISB |= (1<<15);   // configure pin RB15 as input
+    CNPUB |= (1<<15);   // Enable pull-up resistor for RB15
+    
+    TRISAbits.TRISA0 = 0;
+	LATAbits.LATA0 = 0;	
+	INTCONbits.MVEC = 1;
  
 	waitms(500);
 	printf("PIC32MX130 Period measurement using the core timer free running counter.\r\n"
@@ -266,6 +274,8 @@ void main(void)
     while(1)
     {
 		count=GetPeriod(100);
+		
+		
 		if(count>0)
 		{
 			T=(count*2.0)/(SYSCLK*100.0);
@@ -279,7 +289,6 @@ void main(void)
 			{
 			cap = 0.00103;
 			}
-
 			if (cap > 0.011 && cap < 0.0115) // 10nF
 			{
 			cap = 0.01001;
@@ -303,6 +312,16 @@ void main(void)
         sprintf(buffer2, "F: %.2f Hz", f);
         LCDprint(buffer1, 1, 1);
         LCDprint(buffer2, 2, 1);
+        
+        // check if there's  no capacitor being measured
+        
+        if (f > 120000.0 && f < 180000.0) {
+        	// turn on red led
+        	LATAbits.LATA0 = 1;
+        	
+        }
+        LATAbits.LATA0 = !LATAbits.LATA0;
+        
     }
     else
     {
