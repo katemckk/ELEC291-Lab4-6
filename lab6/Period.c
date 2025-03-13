@@ -270,6 +270,12 @@ void main(void)
 			
 			cap =1.44/(f*5001);
 			cap*=1000000.0;
+
+			// **Manual calibration correction**
+            		//if (cap > 1. && cap < 1.5) // If measured capacitance is close to 1nF
+            		//{
+              		//cap -= 0.45; // Adjust by subtracting the error
+           		//}
 			
 			printf("f=%.2fHz, Count=%ld ,Cap=%.4fuF \r", f, count, cap);
 			sprintf(buffer1, "C: %.2f uF", cap);
