@@ -220,6 +220,38 @@ void LCDprint(char * string, unsigned char line, unsigned char clear)
 			WriteData(' '); //Clear the rest of the line if clear is 1
 }
 
+float filter_cap (float cap) {
+	if (cap > 0.0013 && cap < 0.0016) { // If measured capacitance is close to 1nF
+		return 0.00103; }
+	if (cap > 0.011 && cap < 0.0115) { // 10nF
+		return 0.0101; }
+	return cap;
+}
+
+void ADCConf(void)
+{
+    AD1CON1CLR = 0x8000;    // disable ADC before configuration
+    AD1CON1 = 0x00E0;       // internal counter ends sampling and starts conversion (auto-convert), manual sample
+    AD1CON2 = 0;            // AD1CON2<15:13> set voltage reference to pins AVSS/AVDD
+    AD1CON3 = 0x0f01;       // TAD = 4*TPB, acquisition time = 15*TAD 
+    AD1CON1SET=0x8000;      // Enable ADC
+}
+
+int ADCRead(char analogPIN)
+{
+    AD1CHS = analogPIN << 16;    // AD1CHS<16:19> controls which analog pin goes to the ADC
+ 
+    AD1CON1bits.SAMP = 1;        // Begin sampling
+    while(AD1CON1bits.SAMP);     // wait until acquisition is done
+    while(!AD1CON1bits.DONE);    // wait until conversion done
+ 
+    return ADC1BUF0;             // result stored in ADC1BUF0
+}
+
+void wait_debounce() {
+    waitms(50); // Wait for 50ms (adjust as needed)
+}
+
 /* Pinout for DIP28 PIC32MX130:
                                           --------
                                    MCLR -|1     28|- AVDD 
@@ -244,11 +276,15 @@ void LCDprint(char * string, unsigned char line, unsigned char clear)
 void main(void)
 {
 	long int count;
-	float T, f, cap;
+	float T, f, cap, R;
 	char buffer1[16]; // Buffers for LCD printing
 	char buffer2[16];
 	LCD_4BIT(); // Initialize the LCD
 	CFGCON = 0;
+	
+	int adcval;
+    float voltage;
+    int cap_mode = 1;
 
 	char unit[3];  
     float displayCap;
@@ -263,9 +299,15 @@ void main(void)
     TRISB |= (1<<15);   // configure pin RB15 as input
     CNPUB |= (1<<15);   // Enable pull-up resistor for RB15
     
-    TRISAbits.TRISA0 = 0;// LED configuration
+    TRISAbits.TRISA0 = 0;
 	LATAbits.LATA0 = 0;	
 	INTCONbits.MVEC = 1;
+	
+	// Configure pins as analog inputs
+    ANSELBbits.ANSB2 = 1;   // set RB2 (AN4, pin 6 of DIP28) as analog pin
+    TRISBbits.TRISB2 = 1;   // set RB2 as an input
+    
+    ADCConf(); // Configure ADC
  
 	waitms(500);
 	printf("PIC32MX130 Period measurement using the core timer free running counter.\r\n"
@@ -275,27 +317,31 @@ void main(void)
     {
 		count=GetPeriod(100);
 		
+		if (PORTB&(1<<15) == 0) { 
+    		wait_debounce(); // Debounce
+    		if (PORTB&(1<<15) == 0) { 
+        	cap_mode = !cap_mode;
+    		}
+		}
 		
 		if(count>0)
 		{
+			adcval = ADCRead(4); // note that we call pin AN4 (RB2) by it's analog number
+    		voltage=adcval*3.3/1023.0;
+    	
+    		R = (980.0*voltage)/(3.3-voltage);
+    	
+			
 			T=(count*2.0)/(SYSCLK*100.0);
 			f=1/T;
 			
 			
 			cap =1.44/(f*5001.0);
 			cap*=1000000.0;
-			
-			if (cap > 0.0013 && cap < 0.0016) // If measured capacitance is close to 1nF
-			{
-			cap = 0.00103;
-			}
-			if (cap > 0.011 && cap < 0.0115) // 10nF
-			{
-			cap = 0.01001;
-			}
+			cap = filter_cap(cap);
 			
 			
-			printf("f=%.2fHz, Count=%ld, Cap=%.4fuF \r", f, count, cap);
+			printf("f=%.2fHz, Count=%ld, Cap=%.4fuF , resistance=%.4fohms\r", f, count, cap,R);
         
         // Dynamically change unit
         	  
@@ -307,20 +353,30 @@ void main(void)
             unit[0] = 'u'; unit[1] = 'F'; unit[2] = '\0';
         }
         
-        // Display adjusted unit on LCD
-        sprintf(buffer1, "C: %.2f %s", displayCap, unit);
-        sprintf(buffer2, "F: %.2f Hz", f);
-        LCDprint(buffer1, 1, 1);
-        LCDprint(buffer2, 2, 1);
-        
-        // check if there's  no capacitor being measured
+        if (cap_mode == 1) {
+        	// Display adjusted unit on LCD
+        	sprintf(buffer1, "C: %.3f %s", displayCap, unit);
+        	sprintf(buffer2, "F: %.3f Hz", f);
+        	LCDprint(buffer1, 1, 1);
+        	LCDprint(buffer2, 2, 1);
+        }
+        	// check if there's  no capacitor being measured
+        else {
+        	sprintf(buffer1, "R: %.2f %s", R);
+        	LCDprint(buffer1, 1, 1);
+        	LCDprint("   ohms", 2, 1);
+        }
         
         if (f > 120000.0 && f < 180000.0) {
         	// turn on red led
         	LATAbits.LATA0 = 1;
         	
         }
+        
+        
         LATAbits.LATA0 = !LATAbits.LATA0;
+        
+ 
         
     }
     else
