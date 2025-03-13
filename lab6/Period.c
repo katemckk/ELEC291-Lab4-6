@@ -263,7 +263,7 @@ void main(void)
     TRISB |= (1<<15);   // configure pin RB15 as input
     CNPUB |= (1<<15);   // Enable pull-up resistor for RB15
     
-    TRISAbits.TRISA0 = 0;
+    TRISAbits.TRISA0 = 0;// LED configuration
 	LATAbits.LATA0 = 0;	
 	INTCONbits.MVEC = 1;
  
